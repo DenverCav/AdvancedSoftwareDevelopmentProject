@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cross-Artifact SATD Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="mb-4 text-center">Cross-Artifact Technical Debt Analyzer</h1>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="input-group">
+                        <input type="url" name="repo_url" class="form-control" placeholder="Enter GitHub URL (e.g., https://github.com/torvalds/linux)" required>
+                        <button class="btn btn-primary" type="submit">Scan Repository</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+{% if data %}
+            <div class="row text-center mb-4">
+                <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded shadow-sm">
+                        <h5>Code Comments</h5>
+                        <h3>{{ data.get('comment_count', 0) }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded shadow-sm">
+                        <h5>Git Commits</h5>
+                        <h3>{{ data.get('commit_count', 0) }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-white border rounded shadow-sm">
+                        <h5>Issue Trackers</h5>
+                        <h3>{{ data.get('issue_count', 0) }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Detected Technical Debt Items (Total: {{ data.get('total_debt', 0) }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 20%;">Source</th>
+                                <th style="width: 80%;">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Safe lookup using .get() prevents the TypeError -->
+                            {% for item in data.get('items', []) %}
+                            <tr>
+                                <td>
+                                    {% if item.source == 'Code Comments' %}
+                                        <span class="badge bg-primary">Code Comments</span>
+                                    {% elif item.source == 'Git Commit' %}
+                                        <span class="badge bg-success">Git Commit</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Issue Tracker</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.source == 'Code Comments' %}
+                                        <code>{{ item.file }}:{{ item.line }}</code> — {{ item.text }}
+                                    {% elif item.source == 'Git Commit' %}
+                                        <code>{{ item.hexsha }}</code> — {{ item.message }}
+                                    {% else %}
+                                        <code>{{ item.id }}</code> — {{ item.title }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" class="text-center py-4">No technical debt markers found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
